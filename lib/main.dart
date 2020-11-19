@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:quizzler/question.dart';
+import 'package:quizzler/quiz_brain.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+
+QuizBrain quizBrain = QuizBrain();
 
 void main() => runApp(Quizzler());
 
@@ -25,6 +30,52 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
+  int scoreCount = 0;
+
+  void checkAnswer(bool userAnswer) {
+    if (userAnswer == quizBrain.getCorrecrAnswer()) {
+      quizBrain.scoreKeeper.add(Icon(
+        Icons.check,
+        color: Colors.green,
+      ));
+      scoreCount++;
+    } else {
+      quizBrain.scoreKeeper.add(Icon(
+        Icons.close,
+        color: Colors.red,
+      ));
+    }
+  }
+
+  void popAlert() {
+    Alert(
+      context: context,
+      type: AlertType.error,
+      closeFunction: () {
+        setState(() {
+          quizBrain.scoreKeeper.clear();
+        });
+      },
+      title: "Finished",
+      desc: "You have reached the end of the quiz.",
+      buttons: [
+        DialogButton(
+          child: Text(
+            "Cancel",
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          onPressed: () {
+            setState(() {
+              quizBrain.scoreKeeper.clear();
+            });
+            Navigator.pop(context);
+          },
+          width: 120,
+        )
+      ],
+    ).show();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,7 +88,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                quizBrain.getQuestionText(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -62,6 +113,13 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked true.
+                setState(() {
+                  checkAnswer(true);
+                  if (quizBrain.getQuestionNumber() == 2) {
+                    popAlert();
+                  }
+                  quizBrain.nextQuestion();
+                });
               },
             ),
           ),
@@ -80,11 +138,21 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked false.
+                setState(() {
+                  checkAnswer(false);
+                  print(quizBrain.getQuestionNumber());
+                  if (quizBrain.getQuestionNumber() == 2) {
+                    popAlert();
+                  }
+                  quizBrain.nextQuestion();
+                });
               },
             ),
           ),
         ),
-        //TODO: Add a Row here as your score keeper
+        Row(
+          children: quizBrain.scoreKeeper,
+        )
       ],
     );
   }
